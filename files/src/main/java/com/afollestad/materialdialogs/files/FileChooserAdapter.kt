@@ -200,7 +200,11 @@ internal class FileChooserAdapter(
           if (isLightTheme) R.drawable.icon_return_dark
           else R.drawable.icon_return_light
       )
-      holder.nameView.text = currentParent.name
+      holder.nameView.text = if (currentParent == initialFolder && initialFolderLabel != null) {
+        dialog.windowContext.getString(initialFolderLabel)
+      } else {
+        currentParent.name
+      }
       holder.itemView.isActivated = false
 
       if (currentFolder == initialFolder && initialFolderAsRoot) {
