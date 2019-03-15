@@ -206,6 +206,9 @@ internal class FileChooserAdapter(
       if (currentFolder == initialFolder && initialFolderAsRoot) {
         holder.itemView.visibility = View.GONE
         holder.itemView.layoutParams.height = 0
+      } else {
+        holder.itemView.visibility = View.VISIBLE
+        holder.itemView.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
       }
 
       return
