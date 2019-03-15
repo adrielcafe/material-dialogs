@@ -60,6 +60,8 @@ fun MaterialDialog.folderChooser(
   emptyTextRes: Int = R.string.files_default_empty_text,
   allowFolderCreation: Boolean = false,
   @StringRes folderCreationLabel: Int? = null,
+  @StringRes initialFolderLabel: Int? = null,
+  initialFolderAsRoot: Boolean = false,
   selection: FileCallback = null
 ): MaterialDialog {
   var actualFilter: FileFilter = filter
@@ -106,6 +108,8 @@ fun MaterialDialog.folderChooser(
       filter = actualFilter,
       allowFolderCreation = allowFolderCreation,
       folderCreationLabel = folderCreationLabel,
+      initialFolderLabel = initialFolderLabel,
+      initialFolderAsRoot = initialFolderAsRoot,
       callback = selection
   )
   list.adapter = adapter

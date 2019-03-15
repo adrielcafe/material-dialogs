@@ -28,11 +28,7 @@ import com.afollestad.materialdialogs.WhichButton.POSITIVE
 import com.afollestad.materialdialogs.actions.hasActionButtons
 import com.afollestad.materialdialogs.actions.setActionButtonEnabled
 import com.afollestad.materialdialogs.callbacks.onDismiss
-import com.afollestad.materialdialogs.files.util.betterParent
-import com.afollestad.materialdialogs.files.util.friendlyName
-import com.afollestad.materialdialogs.files.util.hasParent
-import com.afollestad.materialdialogs.files.util.jumpOverEmulated
-import com.afollestad.materialdialogs.files.util.setVisible
+import com.afollestad.materialdialogs.files.util.*
 import com.afollestad.materialdialogs.list.getItemSelector
 import com.afollestad.materialdialogs.utils.MDUtil.isColorDark
 import com.afollestad.materialdialogs.utils.MDUtil.maybeSetTextColor
@@ -63,13 +59,15 @@ internal class FileChooserViewHolder(
 /** @author Aidan Follestad (afollestad */
 internal class FileChooserAdapter(
   private val dialog: MaterialDialog,
-  initialFolder: File,
+  private val initialFolder: File,
   private val waitForPositiveButton: Boolean,
   private val emptyView: TextView,
   private val onlyFolders: Boolean,
   private val filter: FileFilter,
   private val allowFolderCreation: Boolean,
   @StringRes private val folderCreationLabel: Int?,
+  @StringRes private val initialFolderLabel: Int?,
+  private val initialFolderAsRoot: Boolean,
   private val callback: FileCallback
 ) : RecyclerView.Adapter<FileChooserViewHolder>() {
 
@@ -135,7 +133,13 @@ internal class FileChooserAdapter(
       }
 
       currentFolder = directory
-      dialog.title(text = directory.friendlyName())
+
+      val title = if (currentFolder == initialFolder && initialFolderLabel != null) {
+        dialog.windowContext.getString(initialFolderLabel)
+      } else {
+        directory.friendlyName()
+      }
+      dialog.title(text = title)
 
       val result = withContext(IO) {
         val rawContents = directory.listFiles() ?: emptyArray()
@@ -194,6 +198,12 @@ internal class FileChooserAdapter(
       )
       holder.nameView.text = currentParent.name
       holder.itemView.isActivated = false
+
+      if (currentFolder == initialFolder && initialFolderAsRoot) {
+        holder.itemView.visibility = View.GONE
+        holder.itemView.layoutParams.height = 0
+      }
+
       return
     }
 
