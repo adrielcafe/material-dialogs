@@ -28,7 +28,11 @@ import com.afollestad.materialdialogs.WhichButton.POSITIVE
 import com.afollestad.materialdialogs.actions.hasActionButtons
 import com.afollestad.materialdialogs.actions.setActionButtonEnabled
 import com.afollestad.materialdialogs.callbacks.onDismiss
-import com.afollestad.materialdialogs.files.util.*
+import com.afollestad.materialdialogs.files.util.betterParent
+import com.afollestad.materialdialogs.files.util.friendlyName
+import com.afollestad.materialdialogs.files.util.hasParent
+import com.afollestad.materialdialogs.files.util.jumpOverEmulated
+import com.afollestad.materialdialogs.files.util.setVisible
 import com.afollestad.materialdialogs.list.getItemSelector
 import com.afollestad.materialdialogs.utils.MDUtil.isColorDark
 import com.afollestad.materialdialogs.utils.MDUtil.maybeSetTextColor
