@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("NOTHING_TO_INLINE")
+
 package com.afollestad.materialdialogs.utils
 
+import android.R.attr
 import android.content.Context
+import android.content.res.ColorStateList
 import android.content.res.Configuration.ORIENTATION_LANDSCAPE
 import android.graphics.Color
 import android.graphics.drawable.Drawable
@@ -35,23 +39,22 @@ import androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.R
 
 @RestrictTo(LIBRARY_GROUP)
 object MDUtil {
 
-  @RestrictTo(LIBRARY_GROUP) fun resolveString(
+  @RestrictTo(LIBRARY_GROUP) inline fun resolveString(
     materialDialog: MaterialDialog,
     @StringRes res: Int? = null,
     @StringRes fallback: Int? = null,
     html: Boolean = false
-  ): CharSequence? {
-    return resolveString(
-        context = materialDialog.windowContext,
-        res = res,
-        fallback = fallback,
-        html = html
-    )
-  }
+  ): CharSequence? = resolveString(
+      context = materialDialog.windowContext,
+      res = res,
+      fallback = fallback,
+      html = html
+  )
 
   @RestrictTo(LIBRARY_GROUP) fun resolveString(
     context: Context,
@@ -91,8 +94,7 @@ object MDUtil {
     return ContextCompat.getDrawable(context, res)
   }
 
-  @RestrictTo(LIBRARY_GROUP)
-  @ColorInt
+  @RestrictTo(LIBRARY_GROUP) @ColorInt
   fun resolveColor(
     context: Context,
     @ColorRes res: Int? = null,
@@ -112,6 +114,28 @@ object MDUtil {
       }
     }
     return ContextCompat.getColor(context, res ?: 0)
+  }
+
+  @RestrictTo(LIBRARY_GROUP)
+  fun resolveColors(
+    context: Context,
+    attrs: IntArray,
+    fallback: ((forAttr: Int) -> Int)? = null
+  ): IntArray {
+    val a = context.theme.obtainStyledAttributes(attrs)
+    try {
+      return (0 until attrs.size).map { index ->
+        val color = a.getColor(index, 0)
+        return@map if (color != 0) {
+          color
+        } else {
+          fallback?.invoke(attrs[index]) ?: 0
+        }
+      }
+          .toIntArray()
+    } finally {
+      a.recycle()
+    }
   }
 
   @RestrictTo(LIBRARY_GROUP) fun resolveInt(
@@ -136,11 +160,12 @@ object MDUtil {
     return darkness >= threshold
   }
 
-  @RestrictTo(LIBRARY_GROUP) fun <T : View> T.dimenPx(@DimenRes res: Int): Int {
+  @RestrictTo(LIBRARY_GROUP)
+  inline fun <T : View> T.dimenPx(@DimenRes res: Int): Int {
     return context.resources.getDimensionPixelSize(res)
   }
 
-  @RestrictTo(LIBRARY_GROUP) fun Context.isLandscape() =
+  @RestrictTo(LIBRARY_GROUP) inline fun Context.isLandscape() =
     resources.configuration.orientation == ORIENTATION_LANDSCAPE
 
   @RestrictTo(LIBRARY_GROUP) fun EditText.textChanged(callback: (CharSequence) -> Unit) {
@@ -165,11 +190,17 @@ object MDUtil {
 
   @RestrictTo(LIBRARY_GROUP) fun TextView?.maybeSetTextColor(
     context: Context,
-    @AttrRes attrRes: Int?
+    @AttrRes attrRes: Int?,
+    @AttrRes hintAttrRes: Int? = null
   ) {
-    if (attrRes == null) return
-    resolveColor(context, attr = attrRes).ifNotZero {
-      this?.setTextColor(it)
+    if (this == null || (attrRes == null && hintAttrRes == null)) return
+    if (attrRes != null) {
+      resolveColor(context, attr = attrRes)
+          .ifNotZero(this::setTextColor)
+    }
+    if (hintAttrRes != null) {
+      resolveColor(context, attr = hintAttrRes)
+          .ifNotZero(this::setHintTextColor)
     }
   }
 
@@ -178,5 +209,29 @@ object MDUtil {
     if (this != null && this != 0) {
       block(this)
     }
+  }
+
+  @RestrictTo(LIBRARY_GROUP) fun createColorSelector(
+    context: Context,
+    @ColorInt unchecked: Int = 0,
+    @ColorInt checked: Int = 0
+  ): ColorStateList {
+    val checkedColor = if (checked == 0) resolveColor(
+        context, attr = R.attr.colorControlActivated
+    ) else checked
+    return ColorStateList(
+        arrayOf(
+            intArrayOf(-attr.state_checked, -attr.state_focused),
+            intArrayOf(attr.state_checked),
+            intArrayOf(attr.state_focused)
+        ),
+        intArrayOf(
+            if (unchecked == 0) resolveColor(
+                context, attr = R.attr.colorControlNormal
+            ) else unchecked,
+            checkedColor,
+            checkedColor
+        )
+    )
   }
 }
