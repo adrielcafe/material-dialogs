@@ -19,11 +19,17 @@ package com.afollestad.materialdialogs.datetime
 
 import androidx.annotation.CheckResult
 import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.WhichButton.POSITIVE
+import com.afollestad.materialdialogs.actions.setActionButtonEnabled
+import com.afollestad.materialdialogs.callbacks.onDismiss
 import com.afollestad.materialdialogs.customview.customView
+import com.afollestad.materialdialogs.datetime.internal.TimeChangeListener
 import com.afollestad.materialdialogs.datetime.utils.getTimePicker
 import com.afollestad.materialdialogs.datetime.utils.hour
+import com.afollestad.materialdialogs.datetime.utils.isFutureTime
 import com.afollestad.materialdialogs.datetime.utils.minute
 import com.afollestad.materialdialogs.datetime.utils.toCalendar
+import com.afollestad.materialdialogs.utils.MDUtil.isLandscape
 import java.util.Calendar
 
 /**
@@ -31,16 +37,28 @@ import java.util.Calendar
  */
 fun MaterialDialog.timePicker(
   currentTime: Calendar? = null,
+  requireFutureTime: Boolean = false,
   show24HoursView: Boolean = true,
   timeCallback: DateTimeCallback = null
 ): MaterialDialog {
-  customView(R.layout.md_datetime_picker_time, noVerticalPadding = true)
+  customView(
+      R.layout.md_datetime_picker_time,
+      noVerticalPadding = true,
+      dialogWrapContent = windowContext.isLandscape()
+  )
 
-  currentTime?.let {
-    getTimePicker().apply {
-      setIs24HourView(show24HoursView)
-      hour(it.get(Calendar.HOUR_OF_DAY))
-      minute(it.get(Calendar.MINUTE))
+  with(getTimePicker()) {
+    setIs24HourView(show24HoursView)
+    if (currentTime != null) {
+      hour(currentTime.get(Calendar.HOUR_OF_DAY))
+      minute(currentTime.get(Calendar.MINUTE))
+    }
+    setOnTimeChangedListener { _, _, _ ->
+      val isFutureTime = isFutureTime()
+      setActionButtonEnabled(
+          POSITIVE,
+          !requireFutureTime || isFutureTime
+      )
     }
   }
 
@@ -48,6 +66,17 @@ fun MaterialDialog.timePicker(
     timeCallback?.invoke(it, getTimePicker().toCalendar())
   }
   negativeButton(android.R.string.cancel)
+
+  if (requireFutureTime) {
+    val changeListener = TimeChangeListener(windowContext, getTimePicker()) {
+      val isFutureTime = it.isFutureTime()
+      setActionButtonEnabled(
+          POSITIVE,
+          !requireFutureTime || isFutureTime
+      )
+    }
+    onDismiss { changeListener.dispose() }
+  }
 
   return this
 }

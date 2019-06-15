@@ -22,8 +22,10 @@ import androidx.annotation.CheckResult
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.WhichButton.POSITIVE
 import com.afollestad.materialdialogs.actions.setActionButtonEnabled
+import com.afollestad.materialdialogs.callbacks.onDismiss
 import com.afollestad.materialdialogs.customview.customView
 import com.afollestad.materialdialogs.datetime.internal.DateTimePickerAdapter
+import com.afollestad.materialdialogs.datetime.internal.TimeChangeListener
 import com.afollestad.materialdialogs.datetime.utils.getDatePicker
 import com.afollestad.materialdialogs.datetime.utils.getPageIndicator
 import com.afollestad.materialdialogs.datetime.utils.getPager
@@ -32,6 +34,7 @@ import com.afollestad.materialdialogs.datetime.utils.hour
 import com.afollestad.materialdialogs.datetime.utils.isFutureTime
 import com.afollestad.materialdialogs.datetime.utils.minute
 import com.afollestad.materialdialogs.datetime.utils.toCalendar
+import com.afollestad.materialdialogs.utils.MDUtil.isLandscape
 import com.afollestad.materialdialogs.utils.MDUtil.resolveColor
 import java.util.Calendar
 
@@ -47,41 +50,47 @@ fun MaterialDialog.dateTimePicker(
   show24HoursView: Boolean = false,
   dateTimeCallback: DateTimeCallback = null
 ): MaterialDialog {
-  customView(R.layout.md_datetime_picker_pager, noVerticalPadding = true)
+  customView(
+      R.layout.md_datetime_picker_pager,
+      noVerticalPadding = true,
+      dialogWrapContent = windowContext.isLandscape()
+  )
 
-  val viewPager = getPager()
-  viewPager.adapter = DateTimePickerAdapter()
-
+  val viewPager = getPager().apply {
+    adapter = DateTimePickerAdapter()
+  }
   getPageIndicator()?.run {
     attachViewPager(viewPager)
     setDotTint(resolveColor(windowContext, attr = attr.textColorPrimary))
   }
 
   minDateTime?.let { getDatePicker().minDate = it.timeInMillis }
-  currentDateTime.let {
-    getDatePicker().apply {
-      init(
-          it?.get(Calendar.YEAR) ?: year,
-          it?.get(Calendar.MONTH) ?: month,
-          it?.get(Calendar.DAY_OF_MONTH) ?: dayOfMonth
-      ) { _, _, _, _ ->
-        val futureTime = isFutureTime(this, getTimePicker())
-        setActionButtonEnabled(
-            POSITIVE, !requireFutureDateTime || futureTime
-        )
-      }
+
+  with(getDatePicker()) {
+    init(
+        currentDateTime?.get(Calendar.YEAR) ?: year,
+        currentDateTime?.get(Calendar.MONTH) ?: month,
+        currentDateTime?.get(Calendar.DAY_OF_MONTH) ?: dayOfMonth
+    ) { _, _, _, _ ->
+      val futureTime = isFutureTime(this, getTimePicker())
+      setActionButtonEnabled(
+          POSITIVE, !requireFutureDateTime || futureTime
+      )
     }
-    getTimePicker().apply {
-      setIs24HourView(show24HoursView)
-      hour(it?.get(Calendar.HOUR_OF_DAY) ?: 12)
-      minute(it?.get(Calendar.MINUTE) ?: 0)
-      setOnTimeChangedListener { _, _, _ ->
-        val isFutureTime = isFutureTime(getDatePicker(), this)
-        setActionButtonEnabled(
-            POSITIVE,
-            !requireFutureDateTime || isFutureTime
-        )
-      }
+  }
+
+  getTimePicker().apply {
+    setIs24HourView(show24HoursView)
+
+    hour(currentDateTime?.get(Calendar.HOUR_OF_DAY) ?: 12)
+    minute(currentDateTime?.get(Calendar.MINUTE) ?: 0)
+
+    setOnTimeChangedListener { _, _, _ ->
+      val isFutureTime = isFutureTime(getDatePicker(), this)
+      setActionButtonEnabled(
+          POSITIVE,
+          !requireFutureDateTime || isFutureTime
+      )
     }
   }
 
@@ -90,11 +99,23 @@ fun MaterialDialog.dateTimePicker(
       POSITIVE,
       !requireFutureDateTime || futureTime
   )
+
   positiveButton(android.R.string.ok) {
     val selectedTime = toCalendar(getDatePicker(), getTimePicker())
     dateTimeCallback?.invoke(it, selectedTime)
   }
   negativeButton(android.R.string.cancel)
+
+  if (requireFutureDateTime) {
+    val changeListener = TimeChangeListener(windowContext, getTimePicker()) {
+      val isFutureTime = isFutureTime(getDatePicker(), it)
+      setActionButtonEnabled(
+          POSITIVE,
+          !requireFutureDateTime || isFutureTime
+      )
+    }
+    onDismiss { changeListener.dispose() }
+  }
 
   return this
 }

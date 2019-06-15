@@ -3,12 +3,12 @@ ext.versions = [
     minSdk              : 16,
     compileSdk          : 28,
     buildTools          : '28.0.3',
-    publishVersion      : '2.6.0',
-    publishVersionCode  : 239,
+    publishVersion      : '2.8.1',
+    publishVersionCode  : 242,
 
     // Plugins
-    gradlePlugin        : '3.3.2',
-    spotlessPlugin      : '3.20.0',
+    gradlePlugin        : '3.4.0',
+    spotlessPlugin      : '3.22.0',
     versionPlugin       : '0.21.0',
     bintrayPlugin       : '0.9',
 
@@ -20,8 +20,8 @@ ext.versions = [
     lifecycle           : '2.0.0',
 
     // Kotlin
-    kotlin              : '1.3.21',
-    coroutines          : '1.1.1',
+    kotlin              : '1.3.30',
+    coroutines          : '1.2.0',
 
     // afollestad
     assent              : '2.2.3',

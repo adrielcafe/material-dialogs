@@ -15,29 +15,14 @@
  */
 package com.afollestad.materialdialogs.internal.list
 
-interface DialogAdapter<in IT, in SL> {
-  fun replaceItems(
-    items: List<IT>,
-    listener: SL? = null
-  )
+/**
+ * Used by the single and multi-choice list adapters to selectively bind list items. This
+ * payload indicates that the notified list item should check its toggleable view.
+ */
+internal object CheckPayload
 
-  fun disableItems(indices: IntArray)
-
-  fun checkItems(indices: IntArray)
-
-  fun uncheckItems(indices: IntArray)
-
-  fun toggleItems(indices: IntArray)
-
-  fun checkAllItems()
-
-  fun uncheckAllItems()
-
-  fun toggleAllChecked()
-
-  fun isItemChecked(index: Int): Boolean
-
-  fun getItemCount(): Int
-
-  fun positiveButtonClicked()
-}
+/**
+ * Used by the single and multi-choice list adapters to selectively bind list items. This
+ * payload indicates that the notified list item should uncheck its toggleable view.
+ */
+internal object UncheckPayload

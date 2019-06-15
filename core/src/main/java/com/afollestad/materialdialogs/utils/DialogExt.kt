@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("NOTHING_TO_INLINE")
-
 package com.afollestad.materialdialogs.utils
 
 import android.content.Context.INPUT_METHOD_SERVICE
@@ -29,8 +27,8 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.ColorInt
-import androidx.annotation.DimenRes
 import androidx.annotation.DrawableRes
+import androidx.annotation.Px
 import androidx.annotation.RestrictTo
 import androidx.annotation.RestrictTo.Scope
 import androidx.annotation.StringRes
@@ -47,12 +45,17 @@ import com.afollestad.materialdialogs.utils.MDUtil.resolveDrawable
 import com.afollestad.materialdialogs.utils.MDUtil.resolveString
 import kotlin.math.min
 
-internal inline fun MaterialDialog.setWindowConstraints(
-  @DimenRes maxWidthRes: Int = R.dimen.md_dialog_max_width
+internal fun MaterialDialog.setWindowConstraints(
+  @Px maxWidth: Int? = null
 ) {
   val win = window ?: return
   win.setSoftInputMode(SOFT_INPUT_ADJUST_RESIZE)
   val wm = win.windowManager ?: return
+
+  if (maxWidth == 0) {
+    // Postpone
+    return
+  }
 
   val display = wm.defaultDisplay
   val size = Point()
@@ -68,20 +71,21 @@ internal inline fun MaterialDialog.setWindowConstraints(
     val windowHorizontalPadding = getDimensionPixelSize(
         R.dimen.md_dialog_horizontal_margin
     )
-    val maxWidth = getDimensionPixelSize(maxWidthRes)
     val calculatedWidth = windowWidth - windowHorizontalPadding * 2
+    val actualMaxWidth =
+      maxWidth ?: context.resources.getDimensionPixelSize(R.dimen.md_dialog_max_width)
 
     view.maxHeight = windowHeight - windowVerticalPadding * 2
     val lp = WindowManager.LayoutParams()
         .apply {
           copyFrom(win.attributes)
-          width = min(maxWidth, calculatedWidth)
+          width = min(actualMaxWidth, calculatedWidth)
         }
     win.attributes = lp
   }
 }
 
-internal inline fun MaterialDialog.setDefaults() {
+internal fun MaterialDialog.setDefaults() {
   // Background color and corner radius
   val backgroundColor = resolveColor(attr = R.attr.md_background_color) {
     resolveColor(attr = R.attr.colorBackgroundFloating)
@@ -99,7 +103,7 @@ fun MaterialDialog.invalidateDividers(
   atBottom: Boolean
 ) = view.invalidateDividers(scrolledDown, atBottom)
 
-internal inline fun MaterialDialog.preShow() {
+internal fun MaterialDialog.preShow() {
   val customViewNoVerticalPadding = config[CUSTOM_VIEW_NO_VERTICAL_PADDING] as? Boolean == true
   this.preShowListeners.invokeAll(this)
 
@@ -120,7 +124,7 @@ internal inline fun MaterialDialog.preShow() {
   }
 }
 
-internal inline fun MaterialDialog.postShow() {
+internal fun MaterialDialog.postShow() {
   val negativeBtn = getActionButton(NEGATIVE)
   if (negativeBtn.isVisible()) {
     negativeBtn.post { negativeBtn.requestFocus() }
@@ -170,7 +174,7 @@ internal fun MaterialDialog.populateText(
   }
 }
 
-internal inline fun MaterialDialog.hideKeyboard() {
+internal fun MaterialDialog.hideKeyboard() {
   val imm =
     windowContext.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
   val currentFocus = currentFocus
@@ -184,7 +188,7 @@ internal inline fun MaterialDialog.hideKeyboard() {
   }
 }
 
-internal inline fun MaterialDialog.colorBackground(@ColorInt color: Int): MaterialDialog {
+internal fun MaterialDialog.colorBackground(@ColorInt color: Int): MaterialDialog {
   window?.setBackgroundDrawable(GradientDrawable().apply {
     cornerRadius = dimen(attr = R.attr.md_corner_radius)
     setColor(color)

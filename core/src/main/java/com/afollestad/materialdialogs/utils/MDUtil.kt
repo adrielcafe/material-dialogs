@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("NOTHING_TO_INLINE")
-
 package com.afollestad.materialdialogs.utils
 
 import android.R.attr
@@ -27,6 +25,7 @@ import android.text.Editable
 import android.text.Html
 import android.text.TextWatcher
 import android.view.View
+import android.view.ViewTreeObserver
 import android.widget.EditText
 import android.widget.TextView
 import androidx.annotation.AttrRes
@@ -44,7 +43,7 @@ import com.afollestad.materialdialogs.R
 @RestrictTo(LIBRARY_GROUP)
 object MDUtil {
 
-  @RestrictTo(LIBRARY_GROUP) inline fun resolveString(
+  @RestrictTo(LIBRARY_GROUP) fun resolveString(
     materialDialog: MaterialDialog,
     @StringRes res: Int? = null,
     @StringRes fallback: Int? = null,
@@ -160,12 +159,11 @@ object MDUtil {
     return darkness >= threshold
   }
 
-  @RestrictTo(LIBRARY_GROUP)
-  inline fun <T : View> T.dimenPx(@DimenRes res: Int): Int {
+  @RestrictTo(LIBRARY_GROUP) fun <T : View> T.dimenPx(@DimenRes res: Int): Int {
     return context.resources.getDimensionPixelSize(res)
   }
 
-  @RestrictTo(LIBRARY_GROUP) inline fun Context.isLandscape() =
+  @RestrictTo(LIBRARY_GROUP) fun Context.isLandscape() =
     resources.configuration.orientation == ORIENTATION_LANDSCAPE
 
   @RestrictTo(LIBRARY_GROUP) fun EditText.textChanged(callback: (CharSequence) -> Unit) {
@@ -204,8 +202,7 @@ object MDUtil {
     }
   }
 
-  @RestrictTo(LIBRARY_GROUP)
-  inline fun Int?.ifNotZero(block: (value: Int) -> Unit) {
+  @RestrictTo(LIBRARY_GROUP) inline fun Int?.ifNotZero(block: (value: Int) -> Unit) {
     if (this != null && this != 0) {
       block(this)
     }
@@ -233,5 +230,27 @@ object MDUtil {
             checkedColor
         )
     )
+  }
+
+  @RestrictTo(LIBRARY_GROUP) fun <T : View> T.waitForLayout(block: T.() -> Unit) {
+    if (measuredWidth > 0 && measuredHeight > 0) {
+      this.block()
+      return
+    }
+
+    viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+      var lastWidth: Int? = null
+
+      override fun onGlobalLayout() {
+        if (lastWidth != null && lastWidth == measuredWidth) {
+          viewTreeObserver.removeOnGlobalLayoutListener(this)
+          return
+        }
+        if (measuredWidth > 0 && measuredHeight > 0) {
+          lastWidth = measuredWidth
+          this@waitForLayout.block()
+        }
+      }
+    })
   }
 }
